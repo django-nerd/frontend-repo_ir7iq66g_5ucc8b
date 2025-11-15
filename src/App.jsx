@@ -307,18 +307,14 @@ function Dashboard() {
 
   const reset = () => setState(s => ({ ...s, intake: 0 }))
 
-  const nextReminderTs = state.lastReminder ? state.lastReminder + state.interval * 60_000 : null
-  const nextIn = nextReminderTs ? Math.max(0, nextReminderTs - Date.now()) : null
-
   // Today's history
   const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
   const now = new Date()
   const todaysHistory = state.history.filter(h => isSameDay(new Date(h.ts), now))
   const todaysTotal = todaysHistory.reduce((sum, h) => sum + h.ml, 0)
 
-  // Progress tiers
+  // Progress tier label only
   const tier = pct >= 100 ? 'Hydrated' : pct >= 75 ? 'Gold' : pct >= 50 ? 'Silver' : pct >= 25 ? 'Bronze' : 'Newbie'
-  const nextMilestone = pct >= 100 ? null : pct >= 75 ? 100 : pct >= 50 ? 75 : pct >= 25 ? 50 : 25
 
   useEffect(() => {
     prevIntake.current = state.intake
@@ -366,50 +362,12 @@ function Dashboard() {
           </div>
         </Card>
 
-        <Card title="Milestones" subtitle="Progress tiers to keep you motivated">
-          <div className="flex items-center justify-between text-sm">
-            <div className="inline-flex items-center gap-2">
-              <Trophy size={16} className="text-amber-500" />
-              <span>Current tier:</span>
-              <span className="font-medium">{tier}</span>
-            </div>
-            {nextMilestone !== null && (
-              <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-zinc-500">Next: {nextMilestone}%</motion.span>
-            )}
-          </div>
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {[25,50,75,100].map((m) => (
-              <motion.div key={m} className={`rounded-xl px-3 py-2 text-center text-xs border ${pct >= m ? 'border-green-300 bg-green-50/70 dark:border-green-900/40 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 'border-zinc-200/70 dark:border-zinc-800/70 bg-white/60 dark:bg-zinc-950/50 text-zinc-500'}`} initial={{ y: 6, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }}>
-                {m}%
-              </motion.div>
-            ))}
-          </div>
-        </Card>
-
         <Card title="Motivation" subtitle="Small sips, big impact">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">Consistency beats intensity. Keep a bottle within reach and take a sip between tasks.</p>
         </Card>
       </div>
 
       <div className="lg:col-span-2 space-y-6">
-        <Card title="Reminder" subtitle="Never miss your next sip">
-          <div className="space-y-4 text-sm">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 p-3">
-                <div className="text-xs text-zinc-500">Interval</div>
-                <div className="mt-1 font-medium">every {state.interval} min</div>
-              </div>
-              <div className="rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 p-3">
-                <div className="text-xs text-zinc-500">Next reminder</div>
-                <div className="mt-1 font-medium">{nextIn ? `${Math.round(nextIn/60000)} min` : '—'}</div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="primary" icon={Bell} onClick={() => alert('Reminder engine coming next — we will enable notifications and optional sound!')}>Test reminder</Button>
-            </div>
-          </div>
-        </Card>
-
         <Card title="Today" subtitle={`Your sips today • ${todaysTotal}ml total`}>
           <div className="text-sm text-zinc-500">Entries: {todaysHistory.length}</div>
           <div className="mt-4 grid gap-2 max-h-64 overflow-auto pr-1">
