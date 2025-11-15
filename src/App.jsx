@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
 import './index.css'
 
@@ -61,7 +61,7 @@ function Progress({ value }) {
 }
 
 function useHydrationState() {
-  const [state, setState] = React.useState(() => {
+  const [state, setState] = useState(() => {
     const saved = localStorage.getItem('hydrate.state')
     return saved ? JSON.parse(saved) : {
       goal: 2500,
