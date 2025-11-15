@@ -217,6 +217,12 @@ function Dashboard() {
   const nextReminderTs = state.lastReminder ? state.lastReminder + state.interval * 60_000 : null
   const nextIn = nextReminderTs ? Math.max(0, nextReminderTs - Date.now()) : null
 
+  // Today's history
+  const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+  const now = new Date()
+  const todaysHistory = state.history.filter(h => isSameDay(new Date(h.ts), now))
+  const todaysTotal = todaysHistory.reduce((sum, h) => sum + h.ml, 0)
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
       <div className="lg:col-span-3 space-y-6">
@@ -248,8 +254,8 @@ function Dashboard() {
 
         <Card title="Quick add" subtitle="Log common amounts with one tap">
           <div className="flex flex-wrap gap-3">
-            {[100,200,300,500].map((v, i) => (
-              <Button key={v} onClick={() => add(v)} variant="subtle" icon={Plus} className="min-w-[86px]" index={i}>+{v}ml</Button>
+            {[100,200,300,500].map((v) => (
+              <Button key={v} onClick={() => add(v)} variant="subtle" icon={Plus} className="min-w-[86px]">+{v}ml</Button>
             ))}
           </div>
         </Card>
@@ -278,8 +284,25 @@ function Dashboard() {
           </div>
         </Card>
 
-        <Card title="Debug" subtitle="For development only" actions={<span className="text-xs text-zinc-500">dev mode</span>}>
-          <pre className="text-xs overflow-auto p-3 rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-50/70 dark:bg-zinc-900/60">{JSON.stringify(state, null, 2)}</pre>
+        <Card title="Today" subtitle={`Your sips today • ${todaysTotal}ml total`}>
+          <div className="text-sm text-zinc-500">Entries: {todaysHistory.length}</div>
+          <div className="mt-4 grid gap-2 max-h-64 overflow-auto pr-1">
+            {todaysHistory.length === 0 && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-zinc-500">No sips yet today.</motion.div>
+            )}
+            {todaysHistory.slice().reverse().map((h,i) => (
+              <motion.div
+                key={`${h.ts}-${i}`}
+                initial={{ y: 6, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: i * 0.02 }}
+                className="flex items-center justify-between text-sm border border-zinc-200/70 dark:border-zinc-800/70 rounded-xl px-3 py-2 bg-white/70 dark:bg-zinc-950/60"
+              >
+                <span className="tabular-nums text-zinc-600 dark:text-zinc-400">{new Date(h.ts).toLocaleTimeString()}</span>
+                <span className="font-medium">{h.ml}ml</span>
+              </motion.div>
+            ))}
+          </div>
         </Card>
       </div>
     </div>
