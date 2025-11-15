@@ -11,6 +11,7 @@ import {
   Bell,
   RefreshCcw
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 function useHydrationState() {
   const [state, setState] = useState(() => {
@@ -37,13 +38,14 @@ function useHydrationState() {
 
 function ThemeToggle({ dark, onToggle }) {
   return (
-    <button
+    <motion.button
       aria-label="Toggle theme"
       onClick={onToggle}
+      whileTap={{ scale: 0.95 }}
       className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200/70 dark:border-zinc-800/70 bg-white/60 dark:bg-zinc-900/60 backdrop-blur hover:bg-white dark:hover:bg-zinc-900 transition-colors"
     >
       {dark ? <Sun size={18} /> : <Moon size={18} />}
-    </button>
+    </motion.button>
   )
 }
 
@@ -65,30 +67,56 @@ function Layout({ children }) {
     <div className="min-h-screen bg-[radial-gradient(60rem_60rem_at_80%_-10%,rgba(59,130,246,0.15),transparent),radial-gradient(50rem_50rem_at_-10%_110%,rgba(16,185,129,0.12),transparent)] dark:bg-[radial-gradient(60rem_60rem_at_80%_-10%,rgba(59,130,246,0.15),transparent),radial-gradient(50rem_50rem_at_-10%_110%,rgba(99,102,241,0.12),transparent)] text-zinc-800 dark:text-zinc-100">
       <div className="mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
         <header className="sticky top-4 z-20 mb-6">
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-950/60 backdrop-blur px-4 py-3 shadow-sm">
+          <motion.div
+            initial={{ y: -12, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 16 }}
+            className="flex items-center justify-between rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/70 dark:bg-zinc-950/60 backdrop-blur px-4 py-3 shadow-sm"
+          >
             <Link to="/" className="flex items-center gap-2 font-semibold tracking-tight">
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-sky-600 text-white shadow-sm"><Droplets size={18} /></span>
               Hydrate.dev
             </Link>
-            <nav className="hidden md:flex items-center gap-1 text-sm">
+            <nav className="hidden md:flex items-center gap-1 text-sm relative">
               {navItems.map(({ to, label }) => (
                 <NavLink
                   key={to}
                   to={to}
-                  className={({ isActive }) => `px-3 py-2 rounded-lg transition-colors ${isActive ? 'bg-zinc-100 dark:bg-zinc-900' : 'hover:bg-zinc-100/70 dark:hover:bg-zinc-900/60'}`}
+                  className={({ isActive }) => `relative px-3 py-2 rounded-lg transition-colors ${isActive ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200'}`}
                 >
-                  {label}
+                  {({ isActive }) => (
+                    <>
+                      <span>{label}</span>
+                      {isActive && (
+                        <motion.span
+                          layoutId="nav-underline"
+                          className="absolute inset-0 -z-10 rounded-lg bg-zinc-100 dark:bg-zinc-900"
+                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                        />
+                      )}
+                    </>
+                  )}
                 </NavLink>
               ))}
             </nav>
             <div className="flex items-center gap-2">
               <ThemeToggle dark={state.dark} onToggle={() => setState(s => ({ ...s, dark: !s.dark }))} />
             </div>
-          </div>
+          </motion.div>
         </header>
 
         <main className="pb-24 md:pb-8">
-          {children}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         <nav className="md:hidden fixed bottom-4 left-0 right-0 z-20">
@@ -97,8 +125,17 @@ function Layout({ children }) {
               {navItems.map(({ to, label, icon: Icon }) => (
                 <li key={to}>
                   <NavLink to={to} className={({ isActive }) => `flex flex-col items-center gap-1 py-3 text-xs ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>
-                    <Icon size={18} />
-                    {label}
+                    {({ isActive }) => (
+                      <motion.div
+                        className="flex flex-col items-center"
+                        initial={false}
+                        animate={{ scale: isActive ? 1.05 : 1 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                      >
+                        <Icon size={18} />
+                        {label}
+                      </motion.div>
+                    )}
                   </NavLink>
                 </li>
               ))}
@@ -114,9 +151,15 @@ function Layout({ children }) {
   )
 }
 
-function Card({ title, children, actions, subtitle }) {
+function Card({ title, children, actions, subtitle, index = 0 }) {
   return (
-    <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/70 backdrop-blur shadow-sm">
+    <motion.div
+      initial={{ y: 10, opacity: 0 }}
+      whileInView={{ y: 0, opacity: 1 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ delay: index * 0.03, type: 'spring', stiffness: 180, damping: 20 }}
+      className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/80 dark:bg-zinc-950/70 backdrop-blur shadow-sm"
+    >
       <div className="p-4 md:p-6 flex items-start justify-between">
         <div>
           <h3 className="font-semibold tracking-tight">{title}</h3>
@@ -125,7 +168,7 @@ function Card({ title, children, actions, subtitle }) {
         {actions}
       </div>
       <div className="px-4 md:px-6 pb-4 md:pb-6">{children}</div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -138,10 +181,15 @@ function Button({ children, onClick, variant = 'default', icon: Icon, className 
     primary: 'bg-gradient-to-br from-blue-600 to-sky-600 text-white hover:from-blue-500 hover:to-sky-500',
   }
   return (
-    <button onClick={onClick} className={`${base} ${variants[variant]} ${className}`}>
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      className={`${base} ${variants[variant]} ${className}`}
+    >
       {Icon && <Icon size={16} />}
       {children}
-    </button>
+    </motion.button>
   )
 }
 
@@ -149,8 +197,11 @@ function Progress({ value }) {
   const clamped = Math.min(100, Math.max(0, value))
   return (
     <div className="w-full h-3 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-      <div
-        className="h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 shadow-[0_0_0_1px_rgba(0,0,0,0.02)_inset] transition-[width] duration-500"
+      <motion.div
+        className="h-full rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 shadow-[0_0_0_1px_rgba(0,0,0,0.02)_inset]"
+        initial={false}
+        animate={{ width: `${clamped}%` }}
+        transition={{ type: 'spring', stiffness: 180, damping: 24 }}
         style={{ width: `${clamped}%` }}
       />
     </div>
@@ -177,13 +228,18 @@ function Dashboard() {
           <div className="grid gap-6">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-4xl md:text-5xl font-semibold tracking-tight">{state.intake}ml</div>
+                <motion.div layout className="text-4xl md:text-5xl font-semibold tracking-tight">{state.intake}ml</motion.div>
                 <div className="mt-1 text-sm text-zinc-500">of {state.goal}ml</div>
               </div>
-              <div className="hidden sm:flex items-center gap-3 rounded-2xl border border-blue-200/50 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/30 px-3 py-2 text-blue-700 dark:text-blue-300">
+              <motion.div
+                className="hidden sm:flex items-center gap-3 rounded-2xl border border-blue-200/50 dark:border-blue-900/40 bg-blue-50/60 dark:bg-blue-950/30 px-3 py-2 text-blue-700 dark:text-blue-300"
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+              >
                 <Droplets size={16} />
                 <span className="text-sm font-medium">{pct.toFixed(0)}%</span>
-              </div>
+              </motion.div>
             </div>
             <Progress value={pct} />
             <div className="text-sm text-zinc-500">{pct.toFixed(0)}% complete</div>
@@ -192,8 +248,8 @@ function Dashboard() {
 
         <Card title="Quick add" subtitle="Log common amounts with one tap">
           <div className="flex flex-wrap gap-3">
-            {[100,200,300,500].map(v => (
-              <Button key={v} onClick={() => add(v)} variant="subtle" icon={Plus} className="min-w-[86px]">+{v}ml</Button>
+            {[100,200,300,500].map((v, i) => (
+              <Button key={v} onClick={() => add(v)} variant="subtle" icon={Plus} className="min-w-[86px]" index={i}>+{v}ml</Button>
             ))}
           </div>
         </Card>
@@ -295,13 +351,19 @@ function History() {
         <div className="text-sm text-zinc-500">Entries: {state.history.length}</div>
         <div className="mt-4 grid gap-2">
           {state.history.length === 0 && (
-            <div className="text-sm text-zinc-500">No entries yet. Log your first sip from the dashboard.</div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-sm text-zinc-500">No entries yet. Log your first sip from the dashboard.</motion.div>
           )}
           {state.history.slice().reverse().map((h,i) => (
-            <div key={i} className="flex items-center justify-between text-sm border border-zinc-200/70 dark:border-zinc-800/70 rounded-xl px-3 py-2 bg-white/70 dark:bg-zinc-950/60">
+            <motion.div
+              key={i}
+              initial={{ y: 6, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: i * 0.03 }}
+              className="flex items-center justify-between text-sm border border-zinc-200/70 dark:border-zinc-800/70 rounded-xl px-3 py-2 bg-white/70 dark:bg-zinc-950/60"
+            >
               <span className="tabular-nums text-zinc-600 dark:text-zinc-400">{new Date(h.ts).toLocaleTimeString()}</span>
               <span className="font-medium">{h.ml}ml</span>
-            </div>
+            </motion.div>
           ))}
         </div>
       </Card>
@@ -309,17 +371,27 @@ function History() {
   )
 }
 
-function Router() {
+function RoutedContent() {
+  // Separate component so we can access useLocation inside BrowserRouter for animations
+  const location = useLocation()
   return (
-    <BrowserRouter>
-      <Layout>
-        <Routes>
+    <Layout>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/history" element={<History />} />
           <Route path="*" element={<div className='text-sm text-zinc-500'>Page not found</div>} />
         </Routes>
-      </Layout>
+      </AnimatePresence>
+    </Layout>
+  )
+}
+
+function Router() {
+  return (
+    <BrowserRouter>
+      <RoutedContent />
     </BrowserRouter>
   )
 }
